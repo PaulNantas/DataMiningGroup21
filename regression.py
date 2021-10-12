@@ -9,7 +9,7 @@ from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error
 import matplotlib
 import matplotlib.pyplot as plt
-#import seaborn as sns
+import seaborn as sns
 import statsmodels.api as sm
 
 #Function that return DataFrame with id corresponding to a country and 
@@ -33,12 +33,15 @@ def country_to_id(df):
 
   return(df,countries_id)
 
+#Function that return DataFrame with id corresponding to a continent and 
+#a dict continent_id to know which id correspond to which continent
 def continent_to_id(df):
   continent = df['ParentLocation']
-  continent_id = {'Eastern Mediterranean':0, 'Europe':1, 'Africa':2 ,'Americas':3, 'Western Pacific':4,'South-East Asia':5 }
-  id = continent.map(continent_id)
-  df["continent_id"] = id
+  continent_id = {'Eastern Mediterranean':0, 'Europe':1, 'Africa':2 ,'Americas':3, 'Western Pacific':4,'South-East Asia':5 } 
+  df["continent_id"] = continent.map(continent_id)
+
   return(df,continent_id)
+
 #Function returns datadframe with the sex selected and the year. if flag_year = False, we don't care about years
 def choose_year_sex(df,sex_choice,flag_year,year=2014): #sex_choice = 'MLE','FMLE','BTSX'
   df_new = df.loc[df['Dim1ValueCode'] == sex_choice]
@@ -54,12 +57,11 @@ def choose_year_sex(df,sex_choice,flag_year,year=2014): #sex_choice = 'MLE','FML
 
 #Return a dataframe with for each data those column
 def order_data(df,order):
+    features = ['AR','MBMI','FPM','ABR']
     for k in range(2,order+1):
-      features = ['AR','MBMI','FPM','ABR']
-      df[f"Power {k} of {features[0]}"] = np.power(df[features[0]],k)
-      df[f"Power {k} of {features[1]}"] = np.power(df[features[1]],k)
-      df[f"Power {k} of {features[2]}"] = np.power(df[features[2]],k)
-      df[f"Power {k} of {features[3]}"] = np.power(df[features[3]],k)
+      for item in features:
+        df[f"Power {k} of {item}"] = np.power(df[item],k)
+
     return (df)
 
 #Split data into test and train set ; flag_squared : If you want 2nd order regression
@@ -78,27 +80,13 @@ def data_split(df,sex_choice,order):
 
 #Normalize data
 def normalization(df):
+
     names = df.columns
-    if 'country_id' in names:
-      print(True)
-      country_id = df['country_id']
-      print(country_id)
-    if 'continent_id' in names:
-      continent_id = df['continent_id']
-  
     x = df.values #returns a numpy array
     min_max_scaler = preprocessing.MinMaxScaler()
     x_scaled = min_max_scaler.fit_transform(x)
     df = pd.DataFrame(x_scaled)
     df = df.set_axis(names, axis=1)#, inplace=False))
-    
-    if 'country_id' in names:
-      print("ICICIICI")
-      print(df)
-      df['country_id'] = country_id 
-      print(df)
-    if 'continent_id' in names:
-      df['continent_id'] = continent_id 
 
     return df
 
@@ -116,7 +104,7 @@ def regression(X_train,X_test,y_train,y_test,flag_country,flag_continent):
       y_train = y_train.loc[:, y_train.columns != 'continent_id']
       y_test = y_test.loc[:, y_test.columns != 'continent_id']
 
-    
+
     LR= LinearRegression()
     LR.fit(X_train,y_train)
     y_predict = LR.predict(X_test)
@@ -130,18 +118,18 @@ def regression(X_train,X_test,y_train,y_test,flag_country,flag_continent):
     print('RMSE =',np.sqrt(mean_squared_error(y_test,y_predict)))
 
     error = np.abs(y_test-y_predict)
-
+    
     return (y_predict,y_test,error)
 
 #Return the list of countries in y_test
 def countries(y_test,id):
     y_test = y_test.to_numpy()
-    list_country = []
+    list_countries = []
     #for c in y_test[:,0]:
     for c in y_test:
-        list_country.append(id[int(c)][0])
+        list_countries.append(id[int(c)][0])
 
-    return(list_country)
+    return(list_countries)
 
 if __name__=='__main__':
     #df = merge_data_sets()
@@ -158,8 +146,8 @@ if __name__=='__main__':
     sex_choice = 'MLE' #sex_choice = 'MLE','FMLE','BTSX'
     flag_year = True #Want a specific year, by default is 2014
     flag_squared = True #Add squared data to dataframe
-    flag_country = True # If you don't want the id of the country in the regression 
-    flag_continent = True # If you don't want the id of the continent in the regression 
+    flag_country = False # If you don't want the id of the country in the regression 
+    flag_continent = False # If you don't want the id of the continent in the regression 
     order = 3 #Order of the polynomial regression 
 
     ############# DATA_TO_KEEP_FOR_REGRESSION#############
@@ -169,9 +157,11 @@ if __name__=='__main__':
     df_regression = order_data(df_regression,order)
     X_train,X_test,y_train,y_test = data_split(df_regression,sex_choice,order)
     list_countries = countries(X_test['country_id'],countries_id)
+    
+    #X_train,X_test = normalization(X_train),normalization(X_test)
+    print(X_train)
     print(list_countries)
-    X_train,X_test = normalization(X_train),normalization(X_test)
-    #y_train,y_test = normalization(y_train),normalization(y_test)
+    #y_train,y_test = normalization(y_traidn),normalization(y_test)
     #print(X_train)
     
     y_predict,y_test,error = regression(X_train,X_test,y_train,y_test,flag_country,flag_continent)
@@ -186,4 +176,4 @@ if __name__=='__main__':
     #plt.show(block=False)
     #plt.pause(15)
     
-    #plt.close() 
+    plt.close() 
