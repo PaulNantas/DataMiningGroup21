@@ -146,8 +146,8 @@ if __name__=='__main__':
     sex_choice = 'MLE' #sex_choice = 'MLE','FMLE','BTSX'
     flag_year = True #Want a specific year, by default is 2014
     flag_squared = True #Add squared data to dataframe
-    flag_country = False # If you don't want the id of the country in the regression 
-    flag_continent = False # If you don't want the id of the continent in the regression 
+    flag_country = True # If you don't want the id of the country in the regression 
+    flag_continent = True # If you don't want the id of the continent in the regression 
     order = 3 #Order of the polynomial regression 
 
     ############# DATA_TO_KEEP_FOR_REGRESSION#############
@@ -158,8 +158,8 @@ if __name__=='__main__':
     X_train,X_test,y_train,y_test = data_split(df_regression,sex_choice,order)
     list_countries = countries(X_test['country_id'],countries_id)
     
-    #X_train,X_test = normalization(X_train),normalization(X_test)
-    print(X_train)
+    X_train,X_test = normalization(X_train),normalization(X_test)
+    #print(X_train)
     print(list_countries)
     #y_train,y_test = normalization(y_traidn),normalization(y_test)
     #print(X_train)
@@ -175,5 +175,4 @@ if __name__=='__main__':
     plt.show()
     #plt.show(block=False)
     #plt.pause(15)
-    
-    plt.close() 
+    #plt.close() 
